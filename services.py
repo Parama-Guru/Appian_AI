@@ -1,23 +1,43 @@
-from langchain_groq import ChatGroq
-from langchain_google_genai import ChatGoogleGenerativeAI
+from utils import AgentState,ocr,call_model,respond
 from langgraph.prebuilt import ToolNode
-from langchain_core.tools import tool
+from langgraph.graph import StateGraph,END
+from utils import should_continue
+from connect_mongo import connect_mongo
+
+def ingestion(result):
+    db=connect_mongo()
+    collection=db.list_collection_names()
+    if result['type_document'] not in collection:
+        db.create_collection(result['type_document'])
+        db[result['type_document']].insert_one(result)
+    else:
+        db[result['type_document']].insert_one(result)
+
 def model():
-    return "everything success"
+    workflow = StateGraph(AgentState)
+    tools=[ocr()]
+    workflow.add_node("llm", call_model)
+    workflow.add_node("tools", ToolNode(tools))
+    workflow.add_node("respond", respond)
 
-class Chatbot():
-    def __init__(self):
-        self.llm=ChatGroq(model_name="Gemma2-9b-It")
-        self.model=ChatGroq(model_name="llama-3.3-70b-versatile")
+    workflow.set_entry_point("llm")
+
+    workflow.add_conditional_edges(
+        "llm",
+    
+        should_continue,
+        {
+            "continue": "tools",
+            "respond": "respond",
+        },
+    )
+
+    workflow.add_edge("tools", "respond")
+    workflow.add_edge("respond", END)
+    graph = workflow.compile()
+    return graph
 
 
-    @tool
-    def ocr(self):
-        ''' large language model inbuilt with Optical character recognition for generating the output'''
-        tool = ChatGoogleGenerativeAI(model_name="gemini-1.5-flash")
-        tools=[tool]
-        self.tool_node=ToolNode(tools)
-        self.llm_with_tools=self.model.bind_tools(tools)
-
-    def __call__(self):
-        
+def preprocessed_data():
+    
+    return 

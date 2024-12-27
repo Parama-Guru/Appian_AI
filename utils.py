@@ -33,16 +33,16 @@ class Categorization(BaseModel):
 
 class AgentState(MessagesState):
     final_response:Categorization
-
+'''
 @tool
 def detect(state: AgentState):
-    '''To the detect the required item fro the documents'''
+    ''To the detect the required item fro the documents''
     messages = state['messages']
     question = messages[-1]
     llm=ChatGroq(model_name="Gemma2-9b-It")
     model_with_structured_output = llm.with_structured_output(Categorization)
     return model_with_structured_output.invoke([HumanMessage(content=question)])
-
+'''
 @tool
 def ocr(self):
     ''' large language model inbuilt with Optical character recognition for generating the output from the diretory'''
@@ -61,6 +61,7 @@ def should_continue(state: AgentState):
     # Otherwise if there is, we continue with the tool
     else:
         return "continue"
+    
 llm=ChatGroq(model_name="Gemma2-9b-It")
 model_with_structured_output = llm.with_structured_output(Categorization)
 
@@ -79,7 +80,3 @@ def respond(state: AgentState):
     # We return the final answer
     print(f"this is 04 response from respond{response}")
     return {"final_response": response}
-
-
-
-

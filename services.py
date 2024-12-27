@@ -3,7 +3,8 @@ from langgraph.prebuilt import ToolNode
 from langgraph.graph import StateGraph,END
 from utils import should_continue
 from connect_mongo import connect_mongo
-
+def model():
+    return "everything sucess"
 def ingestion(result):
     db=connect_mongo()
     collection=db.list_collection_names()
@@ -13,7 +14,7 @@ def ingestion(result):
     else:
         db[result['type_document']].insert_one(result)
 
-def model():
+def model1():
     workflow = StateGraph(AgentState)
     tools=[ocr()]
     workflow.add_node("llm", call_model)
